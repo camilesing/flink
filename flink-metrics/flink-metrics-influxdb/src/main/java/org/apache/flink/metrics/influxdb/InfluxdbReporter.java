@@ -19,9 +19,6 @@
 package org.apache.flink.metrics.influxdb;
 
 import org.apache.flink.metrics.Counter;
-import org.apache.flink.metrics.Gauge;
-import org.apache.flink.metrics.Histogram;
-import org.apache.flink.metrics.Meter;
 import org.apache.flink.metrics.Metric;
 import org.apache.flink.metrics.MetricConfig;
 import org.apache.flink.metrics.reporter.InstantiateViaFactory;
@@ -137,20 +134,12 @@ public class InfluxdbReporter extends AbstractReporter<MeasurementInfo> implemen
         report.retentionPolicy(retentionPolicy);
         report.consistency(consistency);
         try {
-            for (Map.Entry<Gauge<?>, MeasurementInfo> entry : gauges.entrySet()) {
-                report.point(MetricMapper.map(entry.getValue(), timestamp, entry.getKey()));
-            }
-
             for (Map.Entry<Counter, MeasurementInfo> entry : counters.entrySet()) {
                 report.point(MetricMapper.map(entry.getValue(), timestamp, entry.getKey()));
-            }
-
-            for (Map.Entry<Histogram, MeasurementInfo> entry : histograms.entrySet()) {
-                report.point(MetricMapper.map(entry.getValue(), timestamp, entry.getKey()));
-            }
-
-            for (Map.Entry<Meter, MeasurementInfo> entry : meters.entrySet()) {
-                report.point(MetricMapper.map(entry.getValue(), timestamp, entry.getKey()));
+                if (entry.getValue().getName().contains("QMX")) {
+                    log.info("camile: focus metric name: " + entry.getValue().getName());
+                    report.point(MetricMapper.map(entry.getValue(), timestamp, entry.getKey()));
+                }
             }
         } catch (ConcurrentModificationException | NoSuchElementException e) {
             // ignore - may happen when metrics are concurrently added or removed
